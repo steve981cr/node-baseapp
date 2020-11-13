@@ -1,0 +1,78 @@
+<% include ../layouts/header %>
+
+
+<!-- Unordered List View -->
+<h1 class='my-4'>
+  Articles
+  <a href='/articles/create' class='btn btn-primary float-right'>
+  Create new article</a>
+</h1>
+<ul class="list-group">
+  <% articles.forEach((article) => { %>
+    <li class="list-group-item">
+      <% if (!article.published) { %>
+        <span class="badge badge-danger">Draft</span>
+      <% } %>
+      <a href="/articles/<%= article.id %>"><%= article.title %></a>
+      <small>
+        (<%= article.updatedAt.toLocaleString("en-US",
+        {month: 'short', day: 'numeric', year: 'numeric'}); %>)
+      </small>
+    </li>
+  <% }); %>
+</ul>
+
+<!-- Description List -->
+<!-- 
+<h1 class='my-4'>
+  Articles
+  <a href='/articles/create' class='btn btn-primary float-right'>
+    Create new article</a>
+</h1>
+<dl>
+  <% articles.forEach((article) => { %>
+    <hr>
+    <dt><a href='/articles/<%= article.id %>'><%= article.title %></a></dt>
+    <dd>
+      <b>Date: </b>
+      <%= article.updatedAt.toLocaleString("en-US",
+          {month: 'long', day: 'numeric', year: 'numeric'}); %>
+    </dd>
+  <% }) %>
+</dl>
+ -->
+
+<!-- Table View -->
+<!--   
+<div class="card mt-4">
+  <h1 class="card-header bg-dark text-white">
+    Articles  
+    <a href='/articles/create' 
+      class='btn btn-outline-primary float-right'>
+      Create new article</a>       
+  </h2>
+  <table class='table table-bordered table-striped table-condensed'>
+    <thead>
+      <tr>     
+        <th>Title</th>
+         <th>Published</th>       
+        <th>Published Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% articles.forEach((article) => { %>
+        <tr>
+          <td><a href="/articles/<%= article.id %>">
+            <%= article.title %></a></td>
+          <td><%= article.published %></td>          
+          <td>
+            <%= article.updatedAt.toLocaleString("en-US", 
+              {month: 'short', day: 'numeric', year: 'numeric'}) %>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div> -->
+
+<% include ../layouts/footer %>

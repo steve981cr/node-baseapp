@@ -1,0 +1,7 @@
+<% include ../layouts/header %>
+<h1 class='mt-4'>Oops... <%= message %></h1>
+<h2>Error code: <%= error.status %></h2>
+<hr>
+<!-- Don't show error stack in production -->
+<pre><%= error.stack %></pre>
+<% include ../layouts/footer %>

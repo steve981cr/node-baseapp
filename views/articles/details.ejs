@@ -1,0 +1,23 @@
+<% include ../layouts/header %>
+
+<h1 class='mt-4'>
+  <%= article.title %>
+  <span class="btn-group float-right">
+    <a href="/articles/<%= article.id %>/update" class='btn btn-info'>Edit</a>
+    <a href="/articles/" class='btn btn-outline-secondary'>Back</a>
+  </span>
+</h1>
+<p>
+  <strong class='text-danger'><%= !article.published ? 'Draft' : '' %></strong>
+</p>
+<p>
+  <strong>Date:</strong>
+  <%= article.updatedAt.toLocaleString("en-US", {month: 'long', day: 'numeric', year: 'numeric'}); %>
+</p>
+<hr class='mt-2'>
+
+<div style="white-space: pre-line">
+  <%= article.content %>
+</div>
+
+<% include ../layouts/footer %>

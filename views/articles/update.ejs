@@ -1,0 +1,42 @@
+<% include ../layouts/header %>
+<h1 class='mt-4'>Update Article</h1>
+<hr>
+<% include ../layouts/form-errors %>
+
+<form method='POST' action=''>
+  <div class='form-group'>
+    <label for='title'>Title</label><br>
+    <input type='text' id='title' name='title' class='form-control'
+        value="<%= article.title == undefined ? '' : article.title %>" 
+        maxlength='200' required>
+  </div>
+  <div class='form-group'>
+    <label for='content'>Content</label><br>
+    <textarea id='content' name='content' rows='10' class='form-control' required><%= article.content == undefined ? '' : article.content %></textarea>
+  </div>
+  <div class='form-check'>
+    <input type="hidden" id="publishedHidden" value='false'>
+    <input type='checkbox' id='publishedCkbox' name='published' class='form-check-input' value='true' <%= article.published ? 'checked' : '' %>>
+    <label for='published'>Publish</label>
+  </div>
+  <div class='form-group mt-3'>
+    <button type='submit' class='btn btn-primary'>Submit</button>
+    <a href='/articles/<%= article.id %>' class='btn btn-outline-secondary float-right'>Cancel</a>
+  </div>
+</form>
+<hr>
+<h3>Delete Article</h3>
+<a href='/articles/<%= article.id %>/delete' class='btn btn-outline-danger'>Delete</a>
+<% include ../layouts/footer %>
+
+<script type="text/javascript">
+var publishedHidden = document.getElementById('publishedHidden');
+var publishedCkbox = document.getElementById('publishedCkbox');
+publishedCkbox.addEventListener('click', function() {
+  if (publishedCkbox.checked) {
+    publishedHidden.name = '';
+  } else {
+    publishedHidden.name = 'published';
+  }
+});
+</script>

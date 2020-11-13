@@ -1,0 +1,12 @@
+<% if (typeof errors !== 'undefined') { %>
+  <ul class='list-group mt-1'>
+    <li class='list-group-item list-group-item-danger py-1'>
+      <strong>Correct Any Errors Below And Resubmit:</strong>
+    </li>
+    <% for (const error of errors) { %>
+      <li class='list-group-item text-danger border-danger py-1'>
+        <%= error.msg %>
+      </li>
+    <% } %>
+  </ul>
+<% } %>

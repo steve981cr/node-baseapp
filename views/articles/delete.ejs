@@ -1,0 +1,12 @@
+<% include ../layouts/header %>
+<h1 class='mt-4'>Delete Article: <%= article.title %></h1>
+<hr>
+<p>
+  Are you sure you want to delete this article?
+  <form method='POST' action='/articles/<%= article.id %>/delete'>
+    <input type="hidden" name="id" value="<%= article.id %>">
+    <button type='submit' class='btn btn-danger'>Yes - Delete Article</button>
+    <a href="/articles/<%= article.id %>/update" class='btn btn-outline-secondary'>No - Cancel</a>
+  </form>
+</p>
+<% include ../layouts/footer %>
