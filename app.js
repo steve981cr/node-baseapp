@@ -7,7 +7,10 @@ const session = require('express-session');
 const flash = require('express-flash');
 require('dotenv').config();
 
-const router = require('./routes/index');
+const indexRouter = require('./routes/index');
+const authRouter = require('./routes/auth');
+const usersRouter = require('./routes/users');
+const articlesRouter = require('./routes/articles');
 
 // Instantiate an express app object. 
 const app = express();
@@ -26,8 +29,12 @@ app.use(cookieParser());
 app.use(session({ secret: process.env.SECRET, saveUninitialized: true, resave: false }));
 app.use(flash());
 app.use(express.static(path.join(__dirname, 'public')));
-// Router level middleware defined in routes/index.js
-app.use('/', router);
+
+// Router middleware
+app.use('/', indexRouter);
+app.use('/auth', authRouter);
+app.use('/users', usersRouter);
+app.use('/articles', articlesRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

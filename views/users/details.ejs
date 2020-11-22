@@ -1,0 +1,13 @@
+<% include ../layouts/header %>
+
+<h2 class='mt-4'>
+  <%= user.username %> Account
+  <a href="/users/<%= user.id %>/update" class='btn btn-info float-right'>Settings</a>
+</h2>
+<hr>
+<p><b>Email:</b> <%= user.email %></p>
+<% if (user.role) { %>
+  <p><b>Role:</b> <%= user.role %></p>
+<% } %>
+
+<% include ../layouts/footer %>

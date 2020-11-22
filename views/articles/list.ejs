@@ -15,7 +15,7 @@
       <% } %>
       <a href="/articles/<%= article.id %>"><%= article.title %></a>
       <small>
-        (<%= article.updatedAt.toLocaleString("en-US",
+        (<%= article.createdAt.toLocaleString("en-US",
         {month: 'short', day: 'numeric', year: 'numeric'}); %>)
       </small>
     </li>
@@ -35,7 +35,7 @@
     <dt><a href='/articles/<%= article.id %>'><%= article.title %></a></dt>
     <dd>
       <b>Date: </b>
-      <%= article.updatedAt.toLocaleString("en-US",
+      <%= article.createdAt.toLocaleString("en-US",
           {month: 'long', day: 'numeric', year: 'numeric'}); %>
     </dd>
   <% }) %>
@@ -66,7 +66,7 @@
             <%= article.title %></a></td>
           <td><%= article.published %></td>          
           <td>
-            <%= article.updatedAt.toLocaleString("en-US", 
+            <%= article.createdAt.toLocaleString("en-US", 
               {month: 'short', day: 'numeric', year: 'numeric'}) %>
           </td>
         </tr>

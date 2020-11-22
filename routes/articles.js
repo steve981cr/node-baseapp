@@ -1,22 +1,24 @@
+const express = require('express');
+const router = express.Router();
 const { Article } = require('../models');
 const createError = require('http-errors');
 const { body, validationResult } = require('express-validator');
+ 
+// Articles routes
+router.get('/', list);
+router.get('/create', createForm);
+router.post('/create', validateForm(), create);
+router.get('/:id', details);
+router.get('/:id/update', updateForm);
+router.post('/:id/update', validateForm(), update);
+router.get('/:id/delete', deleteForm);
+router.post('/:id/delete', destroy);
 
-// Form Validator & Sanitizer Middleware
-exports.validateForm = [
-  body('title').trim().not().isEmpty()
-  .withMessage('Title is required.').isLength({ max: 200 })
-  .withMessage('Title should not exceed 200 characters.')
-  .matches(/^[\w'",.!?\- ]+$/)
-  .withMessage(`Title should only contain letters, numbers, spaces, and '",.!?- characters.`),
-  body('content').trim().escape().isLength({ min: 3 })
-  .withMessage('Article content must be at least 3 characters.')
-  .isLength({ max: 5000 })
-  .withMessage('Article content should not exceed 5000 characters.'),
-]
 
+// Articles Controller Functions (i.e., router callback/handler functions)
+// Optionally, put these in a controllers/articlesController.js file and import it.
 // GET /articles
-exports.list = async (req, res, next) => {
+async function list(req, res, next) {
   try {
     const articles = await Article.findAll({ 
       where: {published: true},
@@ -33,7 +35,7 @@ exports.list = async (req, res, next) => {
 };
 
 // GET /articles/:id
-exports.details = async (req, res, next) => { 
+async function details(req, res, next) { 
   try {
     const article = await Article.findByPk(req.params.id);
     if (!article) {
@@ -51,12 +53,12 @@ exports.details = async (req, res, next) => {
 };
 
 // GET /articles/create
-exports.createForm = (req, res, next) => {
+function createForm(req, res, next) {
   res.render('articles/create', { title: 'Create Article' });
 };
 
 // POST /articles/create
-exports.create = async (req, res, next) => {
+async function create(req, res, next) {
   // Check request's validation result. Wrap errors in an object.
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -76,7 +78,7 @@ exports.create = async (req, res, next) => {
 };
 
 // GET /articles/:id/update
-exports.updateForm = async (req, res, next) => { 
+async function updateForm(req, res, next) { 
   try {
     const article = await Article.findByPk(req.params.id);
     if (!article) {
@@ -93,7 +95,7 @@ exports.updateForm = async (req, res, next) => {
 };
 
 // POST /articles/:id/update
-exports.update = async (req, res, next) => {
+async function update(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.render('articles/update', { article: req.body, errors: errors.array() });
@@ -114,7 +116,7 @@ exports.update = async (req, res, next) => {
 };
 
 // GET /articles/:id/delete
-exports.deleteForm = async (req, res, next) => {
+async function deleteForm(req, res, next) {
   try {
     const article = await Article.findByPk(req.params.id);
     if (!article) {
@@ -131,7 +133,7 @@ exports.deleteForm = async (req, res, next) => {
 };
 
 // POST articles/:id/delete
-exports.delete = async (req, res, next) => {
+async function destroy(req, res, next) {
   try {
     const id = parseInt(req.params.id);
     const article = await Article.findByPk(id);    
@@ -145,3 +147,24 @@ exports.delete = async (req, res, next) => {
     return next(err);    
   }
 };
+
+
+// Form Validator & Sanitizer Middleware
+// To make it a variable instead of a function, move it above the routes and assign it:
+//   const validateForm = [...];
+//   Then in the router function change validateForm() to validateForm.
+function validateForm() {
+  return [
+    body('title').trim().not().isEmpty()
+    .withMessage('Title is required.').isLength({ max: 200 })
+    .withMessage('Title should not exceed 200 characters.')
+    .matches(/^[\w'",.!?\- ]+$/)
+    .withMessage(`Title should only contain letters, numbers, spaces, and '",.!?- characters.`),
+    body('content').trim().escape().isLength({ min: 3 })
+    .withMessage('Article content must be at least 3 characters.')
+    .isLength({ max: 5000 })
+    .withMessage('Article content should not exceed 5000 characters.'),
+  ]
+}
+
+module.exports = router;

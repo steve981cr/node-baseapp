@@ -1,0 +1,22 @@
+<% include ../layouts/header %>
+
+<div class="row mt-4">
+  <div class="col-md-6 offset-md-3">
+    <div class="card">
+      <h2 class="card-header bg-dark text-white text-center">
+        Delete Account: <%= user.username %>
+      </h2>
+      <div class='card-body'>
+        <p>Are you sure you want to delete this account?</p>
+        <hr>
+        <form method='POST' action='/users/<%= user.id %>/delete'>
+          <input type="hidden" name="id" value="<%= user.id %>">
+          <button type='submit' class='btn btn-danger col-5'>Yes - Delete Account</button>
+          <a href="/users/<%= user.id %>" class='btn btn-outline-secondary float-right col-5'>No - Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% include ../layouts/footer %>

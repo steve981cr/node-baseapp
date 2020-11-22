@@ -1,0 +1,13 @@
+<% include ../layouts/header %>
+
+<h2 class='my-4'>
+  Users
+</h2>
+<dl>
+  <% users.forEach((user) => { %>
+    <hr>
+    <dt><a href='/users/<%= user.id %>'><%= user.username %> - <%= user.email %></a></dt>
+  <% }) %>
+</dl>
+
+<% include ../layouts/footer %>

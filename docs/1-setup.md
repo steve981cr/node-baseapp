@@ -23,16 +23,10 @@ npm install dotenv express-session express-flash
 ## Make some modifications to the file structure
 * Most of the generated file struction will stay as is.
 * Changes: 
-  * All routes will be in one file, so remove the routes/users.js file.
-  * Add a folder for controllers and a pagesController file.
   * Add view folders and files for layouts and general pages.
   * Move the index and error pages to the pages folder. Rename index to home.
   * Add .env file to hold environmental variables.
 ```
-rm routes/users.js
-mkdir controllers
-touch controllers/pagesController.js
-mkdir models
 mkdir views/layouts
 touch views/layouts/header.ejs
 touch views/layouts/footer.ejs
@@ -46,13 +40,12 @@ touch .env
 ---
 ## The app.js file 
 * Express-generator populated the app.js file but we need to make some changes to reflect the modifications to the file structure and the npm packages we added.
-* the app.js contains all the below revisions.
+* the app.js file contains all the below revisions.
 ### The changes made:
 * Change the variable declarations from var to const.
 * Add imports for the session, flash and environmental variables packages we installed.
 * Log the port that the app is listening on.
 * Add middleware for session and flash.
-* We are only using one router file so remove the usersRouter and rename indexRouter to just router.
 * Change the location of the error.ejs file since we moved it to the pages folder.
 
 ---
