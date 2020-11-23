@@ -6,6 +6,7 @@ const logger = require('morgan');
 const session = require('express-session');
 const flash = require('express-flash');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
@@ -29,6 +30,19 @@ app.use(cookieParser());
 app.use(session({ secret: process.env.SECRET, saveUninitialized: true, resave: false }));
 app.use(flash());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Add current user to local storage
+const getCurrentUser = (token) => {
+  if (token) {
+    let decoded = jwt.verify(token, process.env.SECRET);
+    const user = decoded.user || '';
+    return user;
+  }
+}
+app.use((req, res, next) => {
+  res.locals.currentUser = getCurrentUser(req.cookies.jwt);
+  next();
+});
 
 // Router middleware
 app.use('/', indexRouter);

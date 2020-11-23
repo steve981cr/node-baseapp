@@ -4,8 +4,10 @@
 <!-- Unordered List View -->
 <h1 class='my-4'>
   Articles
-  <a href='/articles/create' class='btn btn-primary float-right'>
+  <% if(currentUser){ %>
+    <a href='/articles/create' class='btn btn-primary float-right'>
   Create new article</a>
+  <% } %>
 </h1>
 <ul class="list-group">
   <% articles.forEach((article) => { %>

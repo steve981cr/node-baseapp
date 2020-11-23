@@ -21,11 +21,16 @@ This creates folders/files for sequelize config, models, migrations, and seeders
 ```
 sequelize model:generate --name Article --attributes title:string,content:text,published:boolean
 ```
-* 1b) Make modifications to the migration file if necessary. For example, you could set a default value to true to the published field. `n`
+* 1b) Make modifications to the migration file if necessary. For example, you could set a default value to true to the published field. 
 * 1c) Run the migration file to add the table to the database:
 ```
 sequelize migrate:db
 ```
+* 1d) Optionally confirm the table was added to the (SQLite) DB schema
+  * Open the SQLite shell: `sqlite3 database.sqlite3`
+  * View the DB Schema: `.schema`
+  * Exit the shell: `Ctrl+D`
+
 ### 1.2) Modify the Model files if necessary.
 * We'll leave the model as is, but you could do something like set the default value of published to true.
 ``` javascript
@@ -46,8 +51,12 @@ Article.init({
 * 1.3a) Generate the seeder file.  
 `sequelize seed:generate --name seed-article`
 * 1.3b) Add articles to the seeder file. See seeders/*YYYYMMDDHHMMSS*-seed-article.js
-* 1.3c) Run the seeder file:  
+* 1.3c) Run the seeder file:
 `sequelize db:seed:all`
+* 1.3d) Optionally confirm the seed data was added to the (SQLite) DB.
+  * Open the SQLite shell: `sqlite3 database.sqlite3`
+  * Query the DB: `SELECT * FROM Articles;`
+  * Exit the shell: `Ctrl+D`
 
 ---
 ## 2) Routes

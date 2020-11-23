@@ -186,7 +186,7 @@ app.use('/auth', authRouter);
   </div>
 
     <button type="submit">Submit</button>
-    <span>Already a member? <a href="/login">Log in</a></span>
+    <span>Already a member? <a href="/auth/login">Log in</a></span>
   </div>
 </form>
 
@@ -533,4 +533,230 @@ async function destroy(req, res, next) {
 </p>
 
 <% include ../layouts/footer %>
+```
+
+---
+## Login and out
+To restrict pages to registered users, specific users, or specific user roles you need to authenticate who the user is.
+To do this, add login and logout functions, and store a JSON web token that identifies the user in a cookie.
+* Use the jsonwebtoken package.
+* Jsonwebtoken Docs: <a href="https://github.com/auth0/node-jsonwebtoken">Readme</a>
+
+### SECRET
+Jsonwebtoken requires you add an environmental variable called SECRET to the .env file in development. 
+#### **`routes/users.js`**
+```
+SECRET=add-some-secret-string-here
+```
+
+### Controller Functions and Views
+#### **`routes/users.js`**
+``` js
+// GET /login
+function loginForm(req, res, next) {       
+  res.render('auth/login', { title: "Log In" });
+};
+// POST /login
+async function login(req, res, next) {
+  // Create object of any validation errors from the request.
+  const errors = validationResult(req);
+  // if errors send the errors and original request body back.
+  if (!errors.isEmpty()) {
+    res.render('auth/login', { user: req.body, errors: errors.array() });
+  } else {
+    User.findOne({where: {email: req.body.email}}).then((user) => {
+      // the jwt and cookie each have their own expirations.
+      user.role = "standard";
+      const token = jwt.sign(
+        { user: { id: user.id, username: user.username, role: user.role }}, 
+        process.env.SECRET, 
+        { expiresIn: '1y' }
+      );
+      // Assign the jwt to the cookie. 
+      // Adding option secure: true only allows https. 
+      // maxAge 3600000 is 1 hr (in milliseconds). Below is 1 year.
+      res.cookie('jwt', token, { httpOnly: true, maxAge: 31536000000 });
+      req.flash('success', 'You are logged in.');
+      res.redirect('/');
+    });
+  }
+};
+// GET /logout
+function logout(req, res, next) {
+  res.clearCookie('jwt');
+  req.flash('info', 'Logged out.');
+  res.redirect('/');
+};
+```
+
+### View
+#### **`views/auth/login.ejs`**
+``` html
+<% include ../layouts/header %>
+
+<h1>Log In</h1>
+
+<% include ../layouts/form-errors %>
+
+<form method="POST" action="/auth/login">
+  <div>
+    <label for="email">Email</label>
+    <input type="email" name="email" value="<%= typeof user === 'undefined' ? '' : user.email %>" required autofocus>
+  </div>
+
+  <div>
+    <label for="password">Password</label> (<a href="/auth/forgot-password" tabindex="-1">Forgot Password?</a>)
+    <input type="password" name="password" required>
+  </div>
+
+  <div>
+    <button type="submit">Submit</button>
+    <span>New user? <a href="/auth/signup">Sign up now!</a></span>
+  </div>
+</form>
+
+<% include ../layouts/footer %>
+```
+
+### Validation
+* Use Express-Validator to confirm that email and password credentials.
+* Comment out checking of the account is activated until that functionality is added.
+``` js
+function validateLogin() {return [
+  // change email to lowercase, validate not empty.
+  body('email')
+  .not().isEmpty().withMessage('Email cannot be blank.')
+  .normalizeEmail()
+  // custom validator gets user object from DB from email, rejects if not present, compares user.password to hashed password from login.
+  .custom((value, {req}) => {
+    return User.findOne({where: {email: value}}).then(async (user) => {
+      if (!user) {
+        return Promise.reject('Email or Password are incorrect.');
+      }
+      const passwordIsValid = await bcrypt.compareSync(req.body.password, user.password);
+      if (!passwordIsValid) {
+        throw new Error('Email or Password are incorrect.')
+      }
+      // if (user.activated === false) {
+      //   throw new Error('Account not activated. Check your email for activation link.') 
+      // }
+    });
+  }),
+]}
+```
+---
+## CurrentUser
+* Add currentUser to local storage. This is used for conditional statements in the view files. For instance show logout button if there is a currentUser and login button if not.
+* Make sure to place this before app.use('/', router); or the page will display before getting the currentUser object.
+#### **`app.js`**
+``` js
+const jwt = require('jsonwebtoken');
+...
+// Add current user to local storage
+const getCurrentUser = (token) => {
+  if (token) {
+    let decoded = jwt.verify(token, process.env.SECRET);
+    const user = decoded.user || '';
+    return user;
+  }
+}
+app.use((req, res, next) => {
+  res.locals.currentUser = getCurrentUser(req.cookies.jwt);
+  next();
+});
+...
+app.use('/', router);
+```
+
+### Navbar
+* Add login and logout links to the navbar.
+* Use a conditional to show logout link if user is logged in and signup and login links if not.
+#### **`views/layouts/header.ejs`**
+``` html
+...
+<% if(!currentUser){ %>
+  <li class="nav-item"><a class="nav-link" href="/auth/signup">Sign Up</a></li>
+  <li class="nav-item"><a class="nav-link" href="/auth/login">Log In</a></li>   
+<% } else { %>
+  <li class="nav-item"><a class="nav-link" href="/auth/logout">Log out</a></li>         
+<% } %>
+...
+```
+
+---
+## Authorization
+
+* To limit access to controller actions based on whether a user is logged in, is the correct user, or has the right role we need to add middleware to protect the routes.
+* Add a module file to hold the auth middleware:
+`touch routes/authMiddleware.js`
+* Populate the file with functions to check if a user is logged in, if user role is admin, or if user is the correct user.
+#### **`routes/authMiddleware.js`**
+``` js
+const jwt = require('jsonwebtoken');
+const { User } = require('../models');
+
+exports.isLoggedIn = (req, res, next) => {
+  try {
+    jwt.verify(req.cookies.jwt, process.env.SECRET);
+    next();
+  } catch(err) {
+    console.log(err.name + ': ' + err.message);
+    res.redirect('/auth/login'); 
+  }
+}
+
+exports.isAdmin = async (req, res, next) => {
+  try {
+    const decoded = jwt.verify(req.cookies.jwt, process.env.SECRET);
+    const currentUser = await User.findById(decoded.user.id);
+    if ((!currentUser.role) || currentUser.role !== 'admin') {
+      throw (new Error('Unauthorized'));
+    }
+    next();
+  } catch (err) {
+    console.log(err.name + ': ' + err.message);
+    if (err.name === 'JsonWebTokenError') {
+      res.redirect('/auth/login');
+    } else {
+      res.redirect('/');
+    }
+  }
+}
+
+exports.isCorrectUser = (req, res, next) => {
+  try {
+    const decoded = jwt.verify(req.cookies.jwt, process.env.SECRET);
+    if (req.params.id !== decoded.user.id) {
+      res.redirect('/');
+      throw new Error('Unauthorized');      
+    }
+    next();
+  } catch (err) {
+    console.log(err.name + ': ' + err.message);
+    if (err.name === 'JsonWebTokenError') {
+      res.redirect('/auth/login');
+    } else {
+      res.redirect('/');
+    }
+  }
+}
+```
+* To only allow logged-in users to access a page, import the middleware module to the router and add isLoggedIn as a callback to the router function before calling the handler functions.
+* For example, you may only want registered users to be able to post an article.
+
+#### **`routes/articles.js`**
+``` js
+const auth = require('./authMiddleware');
+...
+router.get('/create', auth.isLoggedIn, createForm);
+router.post('/create', auth.isLoggedIn, validateForm(), create);
+...
+```
+* To only show the create button to logged in users add a conditional:
+#### **`views/articles/list.ejs`**
+``` html
+<% if(currentUser) { %>
+  <a href='/articles/create' class='btn btn-primary float-right'>
+Create new article</a>
+<% } %>
 ```

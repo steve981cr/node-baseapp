@@ -1,105 +1,10 @@
-# Authentication and Authorization
 
-## Overview
 
-We will set up an authentication system for a Node.js with Express application based on user accounts with a unique email address.  
-This guide covers Authentication in the broader sense, meaning it will do three things. Add a User collection with all the CRUD (Create-Read-Update-Delete) actions. Add a login action for authentication to ensure the user is who they say they are. And add authorization to restrict access to specific pages.  
-The first part of this guide sets up the base application.
 
-## User Collection
-Creating an authentication system is a bit complicated so we'll do it in steps. That way you can test it and fix any problems you encounter along the way. Start by making a plain User collection with CRUD actions without any of the authentication logic other than hashing the password.
-We are using the MVC (Model-View-Controller) architecture.
-We are using User as the name of the user collection, but you can use a different name such as Member, Account, etc.
 
-### Generate a model and db migration file
-`sequelize model:generate --name User --attributes username:string,email:string,password:string,role:string,activationToken:string,activated:boolean,resetToken:string,resetSentAt:date`
 
-<h4 id='user-file-structure'>User File Structure</h4>
-Create the necessary directories and files with the below UNIX commands.
-<code>touch models/user.js
-touch controllers/authController.js
-touch controllers/usersController.js
-mkdir views/users
-touch views/users/list.ejs
-touch views/users/details.ejs
-touch views/users/update.ejs
-touch views/users/delete.ejs
-touch views/users/details.ejs
-mkdir views/auth
-touch views/auth/signup.ejs
-touch views/auth/login.ejs
-touch views/auth/forgot-password.ejs
-touch views/auth/reset-password.ejs
-</code>
 
-<h4 id='user-model'>User model</h4>
-<code>// models/user.js 
-const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
-  username: { type: String },
-  email: { type: String, index: true, unique: true },
-  password: { type: String },
-  role: { type: String },
-  activationToken: { type: String },
-  activated: { type: Boolean, default: false },
-  resetToken: { type: String },
-  resetSentAt: { type: Date }
-}, {timestamps: true});
-
-// Virtual field for user URL
-userSchema.virtual('url').get(function() {
-  return '/users/' + this.id;
-});
-
-module.exports = mongoose.model('User', userSchema);
-</code>
-• The only required property for each field is the type.
-• While Mongoose provides built-in validators that you would add as properties in the model's schema, they are not as rubust as those provided by express-validator.
-• Add an index and a unique requirement to the email field.
-• Make the activated field default to false.
-• Role is set to type string, but it could also be an array type if users can have multiple roles.
-• The timestamps option will automatically add createdAt and updatedAt fields and insert a timestamp value when a document is created or updated.
-• Add a virtual field called url for convenience. We'll use it in the controller functions.
-
-<h4 id='preliminary-routes'>Preliminary Routes</h4>
-Put all routes in the routes/index.js file.
-Import the controllers and call the controller actions in the second argument of the route.
-
-<code>// routes/index.js 
-const express = require('express');
-const router = express.Router();
-const pagesController = require('../controllers/pagesController');
-<b>const authController = require('../controllers/authController');
-const usersController = require('../controllers/usersController');</b>
-
-// Pages routes
-router.get('/', pagesController.home);
-router.get('/protected', pagesController.protected);
-
-<b>// Auth routes
-router.get('/signup', authController.signupPage);
-router.post('/signup', authController.signup);
-
-// Users routes
-router.get('/users', usersController.list);
-router.get('/users/:id', usersController.details);
-router.get('/users/:id/update', usersController.updatePage);
-router.post('/users/:id/update', usersController.update);
-router.get('/users/:id/delete', usersController.deletePage);
-router.post('/users/:id/delete', usersController.delete);</b>
-
-module.exports = router;
-</code>
-
-<h4 id='preliminary-controllers'>Preliminary controllers</h4>
-Add standard REST controller actions. For now we'll structure it like any collection with two differences.
-First, instead of keeping the create action in the users controller, We'll put in a separate auth controller and call it signup.
-Second, before saving the password to the database we'll make it indecipherable by hashing it with the bcrypt package.
-
-Install bcrypt.
-<kbd>npm install bcrypt</kbd>
-<b>Bcrypt Docs:</b> <a href="https://github.com/kelektiv/node.bcrypt.js#readme">Readme</a>
 
 <code>// controllers/authController.js 
 const bcrypt = require('bcrypt');

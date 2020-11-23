@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { Article } = require('../models');
+const { Article, User } = require('../models');
 const createError = require('http-errors');
 const { body, validationResult } = require('express-validator');
+const auth = require('./authMiddleware');
  
 // Articles routes
 router.get('/', list);
-router.get('/create', createForm);
-router.post('/create', validateForm(), create);
+router.get('/create', auth.isLoggedIn, createForm);
+router.post('/create', auth.isLoggedIn, validateForm(), create);
 router.get('/:id', details);
 router.get('/:id/update', updateForm);
 router.post('/:id/update', validateForm(), update);
@@ -37,7 +38,7 @@ async function list(req, res, next) {
 // GET /articles/:id
 async function details(req, res, next) { 
   try {
-    const article = await Article.findByPk(req.params.id);
+    const article = await Article.findByPk(req.params.id, {include: User});
     if (!article) {
       // return res.status(404).send('article not found');
       return next(createError(404));
@@ -66,7 +67,10 @@ async function create(req, res, next) {
       { article: req.body, errors: errors.array() });
   }
   try {
-    const article = await Article.create(req.body);
+    // const article = await Article.create(req.body);
+    const article = Article.build(req.body);
+    article.userId = res.locals.currentUser.id;
+    await article.save();
     // res.send(article);
     req.flash('success', 'Article has been created.');
     res.redirect(`/articles/${article.id}`);    

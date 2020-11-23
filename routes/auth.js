@@ -39,11 +39,44 @@ async function signup(req, res, next) {
   }
 };
 
-function loginForm(req, res, next) {};
-function login(req, res, next) {};
-function logout(req, res, next) {};
+// GET /login
+function loginForm(req, res, next) {       
+  res.render('auth/login', { title: "Log In" });
+};
+// POST /login
+async function login(req, res, next) {
+  // Create object of any validation errors from the request.
+  const errors = validationResult(req);
+  // if errors send the errors and original request body back.
+  if (!errors.isEmpty()) {
+    res.render('auth/login', { user: req.body, errors: errors.array() });
+  } else {
+    User.findOne({where: {email: req.body.email}}).then((user) => {
+      // the jwt and cookie each have their own expirations.
+      user.role = "standard";
+      const token = jwt.sign(
+        { user: { id: user.id, username: user.username, role: user.role }}, 
+        process.env.SECRET, 
+        { expiresIn: '1y' }
+      );
+      // Assign the jwt to the cookie. 
+      // Adding option secure: true only allows https. 
+      // maxAge 3600000 is 1 hr (in milliseconds). Below is 1 year.
+      res.cookie('jwt', token, { httpOnly: true, maxAge: 31536000000 });
+      req.flash('success', 'You are logged in.');
+      res.redirect('/');
+    });
+  }
+};
 
-// Form Validator & Sanitizer Middleware Placeholders
+// GET /logout
+function logout(req, res, next) {
+  res.clearCookie('jwt');
+  req.flash('info', 'Logged out.');
+  res.redirect('/');
+};
+
+// Form Validator & Sanitizer Middleware
 function validateSignup() {
   return [
     // validate username not empty.
@@ -71,6 +104,27 @@ function validateSignup() {
     )  
   ];
 }
-function validateLogin() {return []}
+
+function validateLogin() {return [
+  // change email to lowercase, validate not empty.
+  body('email')
+  .not().isEmpty().withMessage('Email cannot be blank.')
+  .normalizeEmail()
+  // custom validator gets user object from DB from email, rejects if not present, compares user.password to hashed password from login.
+  .custom((value, {req}) => {
+    return User.findOne({where: {email: value}}).then(async (user) => {
+      if (!user) {
+        return Promise.reject('Email or Password are incorrect.');
+      }
+      const passwordIsValid = await bcrypt.compareSync(req.body.password, user.password);
+      if (!passwordIsValid) {
+        throw new Error('Email or Password are incorrect.')
+      }
+      // if (user.activated === false) {
+      //   throw new Error('Account not activated. Check your email for activation link.') 
+      // }
+    });
+  }),
+]}
 
 module.exports = router;

@@ -28,3 +28,4 @@
 1. [Basic Node.js app setup](./docs/1-setup.md)
 1. [Node.js collection with Sequelize](./docs/2-collection.md)
 1. [Node.js User authentication system](./docs/3-authentication.md)
+1. [Node.js User authentication system](./docs/4-user-associations.md)
