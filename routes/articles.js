@@ -9,12 +9,11 @@ const auth = require('./authMiddleware');
 router.get('/', list);
 router.get('/create', auth.isLoggedIn, createForm);
 router.post('/create', auth.isLoggedIn, validateForm(), create);
-router.get('/:id', details);
+router.get('/:id', detail);
 router.get('/:id/update', updateForm);
 router.post('/:id/update', validateForm(), update);
 router.get('/:id/delete', deleteForm);
 router.post('/:id/delete', destroy);
-
 
 // Articles Controller Functions (i.e., router callback/handler functions)
 // Optionally, put these in a controllers/articlesController.js file and import it.
@@ -33,10 +32,10 @@ async function list(req, res, next) {
     // return res.send(err); // API response
     return next(err);
   }
-};
+}
 
 // GET /articles/:id
-async function details(req, res, next) { 
+async function detail(req, res, next) { 
   try {
     const article = await Article.findByPk(req.params.id, {include: User});
     if (!article) {
@@ -44,27 +43,27 @@ async function details(req, res, next) {
       return next(createError(404));
     }
     // res.send(article);
-    res.render('articles/details', { title: 'Article', 
+    res.render('articles/detail', { title: 'Article', 
       article: article });    
   } catch (err) {
     console.log('Error querying article', JSON.stringify(err))
     // return res.send(err);
     return next(err);    
   }
-};
+}
 
 // GET /articles/create
 function createForm(req, res, next) {
   res.render('articles/create', { title: 'Create Article' });
-};
+}
 
 // POST /articles/create
 async function create(req, res, next) {
   // Check request's validation result. Wrap errors in an object.
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.render('articles/create',
-      { article: req.body, errors: errors.array() });
+    return res.render('articles/create', { title: 'Create Article', 
+      article: req.body, errors: errors.array() });
   }
   try {
     // const article = await Article.create(req.body);
@@ -79,7 +78,7 @@ async function create(req, res, next) {
     // return res.status(400).send(err);
     return next(err);    
   }
-};
+}
 
 // GET /articles/:id/update
 async function updateForm(req, res, next) { 
@@ -90,19 +89,20 @@ async function updateForm(req, res, next) {
       return next(createError(404)); 
     }
     // res.send(article);
-    res.render('articles/update', { title: 'Update Article', article: article  });    
+    res.render('articles/update', { title: 'Update Article', 
+      article: article  });    
   } catch (err) {
     console.log('Error finding article', JSON.stringify(err))
     // return res.send(err);
     return next(err);    
   }
-};
+}
 
 // POST /articles/:id/update
 async function update(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.render('articles/update', { article: req.body, errors: errors.array() });
+    return res.render('articles/update', { title: 'Update Article', article: req.body, errors: errors.array() });
   }
   try {
     const id = parseInt(req.params.id);
@@ -117,7 +117,7 @@ async function update(req, res, next) {
     // res.status(400).send(err);
     return next(err);    
   }
-};
+}
 
 // GET /articles/:id/delete
 async function deleteForm(req, res, next) {
@@ -134,7 +134,7 @@ async function deleteForm(req, res, next) {
     // return res.send(err);
     return next(err);    
   }
-};
+}
 
 // POST articles/:id/delete
 async function destroy(req, res, next) {
@@ -150,7 +150,7 @@ async function destroy(req, res, next) {
     // res.status(400).send(err);
     return next(err);    
   }
-};
+}
 
 
 // Form Validator & Sanitizer Middleware

@@ -60,38 +60,70 @@ Article.init({
 
 ---
 ## 2) Routes
-* Import the controller file and add the routes for the Articles collection.
-* The get() method serves GET requests for HTML pages. 
-  * GET requests include HTML pages for:
-    * List of all articles, or a filtered list of articles.
-    * Details showing a specific article.
-    * Forms pages to Create, Update, and Delete an article.
-  * POST requests to post data to Create, Update, and Delete an article.
-    * HTML forms can only send POST requests.
-``` JavaScript
-// routes/index.js
-const articlesController = require('../controllers/articlesController');
+* Populate the router file for the collection. It will hold the routes, controller, and form validations.
+* Add the collection's router as middleware to the app.
+### 2.1) Add articles router middleware to app.js
+* Import the routes/articles.js router module.
+* Add it as middleware to the app.
+#### **`app.js`**
+``` js
+const articlesRouter = require('./routes/articles');
 ...
-// Articles routes
-router.get('/articles', articlesController.list);
-router.get('/articles/create', articlesController.createForm);
-router.post('/articles/create', articlesController.validateForm, articlesController.create);
-router.get('/articles/:id', articlesController.details);
-router.get('/articles/:id/update', articlesController.updateForm);
-router.post('/articles/:id/update', articlesController.validateForm, articlesController.update);
-router.get('/articles/:id/delete', articlesController.deleteForm);
-router.post('/articles/:id/delete', articlesController.delete);
+app.use('/articles', articlesRouter);
 ```
+* Now any HTTP request to /articles will be handled by the articlesRouter module.
 
----
-## 3) Controller setup
-* Add a controller file: `touch controllers/articlesController.js`
-* At the top import the Article model, the http-errors package to format errors for http responses, and express-validator to validate and/or sanitize form data.
+### 2.2) Add routes
+* Add the routes for the Articles collection.
+* At the top import Express and instantiate an express router. 
+* The controller functions will also be placed in this file. For that we will need to import:
+  * The Article model. 
+  * The http-errors package to format errors for http responses. 
+  * Express-validator to validate and/or sanitize form data.
+* Add a router method for each route.  
+  `router.METHOD(path, callback [, callback ...])`
+* The router.get() method serves GET requests for HTML pages including:
+  * List page of all articles, or a filtered list of articles.
+  * Detail page showing a specific article.
+  * Form pages to Create, Update, and Delete an article.
+* the router.post() method handles POST requests with form data including:
+  * forms data to Create, Update, and Delete an article.
+  * HTML forms can only send POST or GET requests.
+* Add placeholder controller functions for the router callbacks.
+* Add a placeholder for form validation.
+
+#### **`routes/articles.js`**
 ``` JavaScript
+const express = require('express');
+const router = express.Router();
 const { Article } = require('../models');
 const createError = require('http-errors');
 const { body, validationResult } = require('express-validator');
+
+// Articles routes
+router.get('/', list);
+router.get('/create', createForm);
+router.post('/create', validateForm(), create);
+router.get('/:id', detail);
+router.get('/:id/update', updateForm);
+router.post('/:id/update', validateForm(), update);
+router.get('/:id/delete', deleteForm);
+router.post('/:id/delete', destroy);
+
+// Controller functions placeholders
+function list(req, res, next) {}
+function createForm(req, res, next) {}
+function create(req, res, next) {}
+function detail(req, res, next) {}
+function updateForm(req, res, next) {}
+function update(req, res, next) {}
+function deleteForm(req, res, next) {}
+function destroy(req, res, next) {}
+
+// Validation placeholder
+function validateForm() { return []; }
 ```
+
 ---
 ## 4) Views setup
 * Add a view folder and files for the articles.
@@ -104,16 +136,16 @@ touch views/articles/update.ejs
 touch views/articles/delete.ejs
 ```
 ---
-## 3&4.1) List Route, Controller Function, View
+## 3&4.1) List Controller Function and View
 ### Route
 * GET Requests to /articles are handled by the controller list function.
 ``` JavaScript
-router.get('/articles', articlesController.list);
+router.get('/', list);
 ```
 ### Controller List Function
 ``` JavaScript
 // GET /articles
-exports.list = async (req, res, next) => {
+async function list(req, res, next) {
   try {
     const articles = await Article.findAll({ 
       // where: {published: true},
@@ -145,26 +177,24 @@ exports.list = async (req, res, next) => {
 * You can display the results as an unordered list, an ordered list, a description list, a table, or some other format. 
 * The example uses an Unordered list, but has commented out code for a description list and a table. 
 
-
 ---
 ## 3&4.2) Detail Route, Controller Function, View
 ### Route
 * GET Requests to /articles/:id are handled by the controller details function.
 * :id is a route parameter. It can be accessed in the controller from the request params property `req.params.id`.
 ``` JavaScript
-router.get('/articles/:id', articlesController.details);
+router.get('/:id', detail);
 ```
 ### Controller Details Function
 
 ``` JavaScript
-// controllers/articlesController.js
-exports.details = async (req, res, next) => { 
+async function detail(req, res, next) { 
   try {
     const article = await Article.findByPk(req.params.id);
     if (!article) {
       return next(createError(404));
     }
-    res.render('articles/details', { title: 'Article', 
+    res.render('articles/detail', { title: 'Article', 
       article: article });    
   } catch (err) {
     return next(err);    
@@ -187,40 +217,34 @@ exports.details = async (req, res, next) => {
 
 ---
 ## 3&4.3) Create Routes, Controller Functions, Form View
-### Route
-* GET Requests to /articles/:id are handled by the controller details function.
-* :id is a route parameter. It can be accessed in the controller from the request params property `req.params.id`.
-``` JavaScript
-router.get('/articles/:id', articlesController.details);
-```
-### Controller createForm Function
-
+## GET Request: Display Form
 * User clicks the link to the Create Article form (a GET request):
 ### Route: 
 ``` JavaScript
-router.get('/articles/create', articlesController.createForm);
+router.get('/create', createForm);
 ```
 ### Controller Callback Function:
 ``` JavaScript
 // GET /articles/create
-exports.createView = (req, res, next) => {
+function createView(req, res, next) {
   res.render('articles/create', { title: 'Create Article' });
 };
 ```
-User fills out form and hits the submit button (a POST request with form data):
+* User fills out form and hits the submit button (a POST request with form data):
+## POST Request: Process Form
 ### Route: 
 ``` JavaScript
-router.post('/articles/create', articlesController.validateForm, articlesController.create);
+router.post('/create', validateForm(), create);
 ```
 ### Controller Callback Function:
 ``` JavaScript
 // POST /articles/create
-exports.create = async (req, res, next) => {
+async function create(req, res, next) {
   // Check request's validation result. Wrap errors in an object.
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.render('articles/create', 
-      { article: req.body, errors: errors.array() });
+    return res.render('articles/create', { title: 'Create Article', 
+      article: req.body, errors: errors.array() });
   }
   try {
     const article = await Article.create(req.body);
@@ -230,4 +254,158 @@ exports.create = async (req, res, next) => {
   }
 };
 ```
-### For Update and Delete see the controller functions and the views.
+* The first few statements handle form submissions that fail the validation middleware.
+  * The validation errors are returned as an object. Assign it to an errors variable.
+  * Re-render the create form. Pass back in the title, the values submitted in the form, and the errors object.
+* If the validations pass then save the form data to the database.
+  * Chain the Sequelize create() method to the Article model. 
+  * Sequelize methods that interact with the database are asynchronous. 
+    * As such the whole controller function needs to be prefaced with async.
+    * And this method needs to be prefaced with await so that the transaction completes before moving to the next statement.
+* After the article record is created in the database, redirect to the article detail page.
+
+---
+## 3&4.4) Update Routes, Controller Functions, Form View
+## GET Request: Display Form
+* The article detail page has an Edit button with a link to the Update form.
+``` html
+<a href="/articles/<%= article.id %>/update">Edit</a>
+```
+### Route: 
+``` JavaScript
+router.get('/:id/update', updateForm);
+```
+### Controller Callback Function:
+``` js
+// GET /articles/:id/update
+async function updateForm(req, res, next) { 
+  try {
+    const article = await Article.findByPk(req.params.id);
+    if (!article) { eturn next(createError(404)) }
+    res.render('articles/update', { title: 'Update Article', 
+      article: article });    
+  } catch (err) {
+    return next(err);    
+  }
+}
+```
+* User fills out form and hits the submit button (a POST request with form data):
+
+## POST Request: Process Form
+### Route: 
+``` JavaScript
+router.post('/:id/update', validateForm(), update);
+```
+* ValidateForm() is a middleware function we will populate later.
+
+### Controller Callback Function:
+``` js
+// POST /articles/:id/update
+async function update(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.render('articles/update', { title: 'Update Article', 
+      article: req.body, errors: errors.array() });
+  }
+  try {
+    const id = parseInt(req.params.id);
+    const article = await Article.findByPk(id);    
+    const { title, content, published } = req.body;
+    await article.update({ title, content, published });
+    req.flash('info', 'Article has been updated.');
+    res.redirect(`/articles/${id}`); 
+  } catch (err) {
+    return next(err);    
+  }
+}
+```
+* The first statement are to handle validation errors.
+  * If the validation middleware returns any errors then re-render the update form.
+  * Pass back the title, the form data that was submitted, and an array of errors.
+* If no errors then get the article id from the route and pull the article from the DB.
+* Get the form fields from the request body and use them to update the record in the DB.
+* Redirect to the article detail page.
+
+---
+## 3&4.5) Delete Routes, Controller Functions, Form View
+## GET Request: Display Form
+* The article update page has a Delete button with a link to the Delete form.
+``` html
+<a href="/articles/<%= article.id %>/delete">Delete</a>
+```
+### Route: 
+``` JavaScript
+router.get('/:id/delete', deleteForm);
+```
+### Controller Callback Function:
+``` js
+// GET /articles/:id/delete
+async function deleteForm(req, res, next) {
+  try {
+    const article = await Article.findByPk(req.params.id);
+    if (!article) { return next(createError(404)) }
+    res.render('articles/delete', { title: 'Delete Article', 
+      article: article });    
+  } catch (err) {
+    return next(err);    
+  }
+}
+```
+* User confirms they really do want to delete this article and clicks Confirm delete.
+* This is actually a form that submits a POST request.
+```
+
+```
+
+## POST Request: Process Form
+### Route: 
+``` JavaScript
+router.post('/:id/delete', delete);
+```
+### Controller Callback Function:
+``` js
+// POST articles/:id/delete
+async function destroy(req, res, next) {
+  try {
+    const id = parseInt(req.params.id);
+    const article = await Article.findByPk(id);    
+    await article.destroy();
+    req.flash('info', 'Article has been deleted.');
+    res.redirect('/articles');
+  } catch (err) {
+    return next(err);    
+  }
+}
+```
+
+---
+## Validation and Sanitation
+* Ref: [express-validator.github.io/docs]('https://express-validator.github.io/docs/')
+* We installed and imported the express-validator package.
+* Fill out the placeholder validator array. 
+* We put it inside a function and called the function as middleware in the route. By placing the validator array in a function, we can put it after the router functions. JavaScript functions are hoisted to the top of the module, while variables are not.
+``` js
+const { body, validationResult } = require('express-validator');
+...
+// Routes with validation middleware
+router.post('/create', auth.isLoggedIn, validateForm(), create);
+router.post('/:id/update', validateForm(), update);
+...
+function validateForm() {
+  return [
+    body('title').trim().not().isEmpty()
+    .withMessage('Title is required.').isLength({ max: 200 })
+    .withMessage('Title should not exceed 200 characters.')
+    .matches(/^[\w'",.!?\- ]+$/)
+    .withMessage(`Title should only contain letters, numbers, spaces, and '",.!?- characters.`),
+    body('content').trim().escape().isLength({ min: 3 })
+    .withMessage('Article content must be at least 3 characters.')
+    .isLength({ max: 5000 })
+    .withMessage('Article content should not exceed 5000 characters.'),
+  ]
+}
+```
+* Each item in the array is a validator for a form field.
+* You can chain multiple validator methods on the same field.
+* Validation means checking that requirements are met such as minimum length.
+* Sanitization involves modifying the data before saving it such as trimming leading and trailing spaces, or downcasing email addresses.

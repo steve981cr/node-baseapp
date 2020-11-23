@@ -57,7 +57,7 @@ touch .env
 * Make sure the .env file is in your .gitignore file so you don't expose any sensitive data. To see what the .env file should look like, see the .env.example file.
 
 ---
-## Routes
+## Routes and Controller Functions
 * Change the routes file.
   * This file is a module that is imported into the app.js file. 
     * It contains all the app's routes. 
@@ -65,36 +65,35 @@ touch .env
   * Import Express and generate a Router instance.
   * Import the pagesController.
   * Add routes related to the pages controller to the router instance. Specifically, GET requests for the home and about pages.
-  * Export the router instance.
+  * The route's callback/handler functions process the HTTP request and return a response back to the client. In the Model-View-Controller design pattern, these are the controller functions.
+  * The the home and about controller functions render the specified HTML templates in the views/pages folder. 
+  * They also pass an object to the template for a property for title.
+  * You can define the controller functions in one of three places: 
+    * Directly in the router method itself.
+    * Below the router methods (we'll do this).
+    * In a separate controller file and import it into the reouter file.
+
+#### **`routes/index.js`**
 ```
-// routes/index.js 
 const express = require('express');
 const router = express.Router();
-const pagesController = require('../controllers/pagesController');
 
 // Pages routes
-router.get('/', pagesController.home);
-router.get('/about', pagesController.about);
+router.get('/', home);
+router.get('/about', about);
 
-module.exports = router;
-```
-
----
-## Controller
-* The controller contains the handler functions for each route.
-* These functions merely render the specified HTML templates in the views/pages folder. 
-* They also pass an object to the template for a property for title.
-```
-// controllers/pagesController.js 
+// Controller functions
 // GET /
-exports.home = (req, res) => {
+function home(req, res) {
   res.render('pages/home', { title: 'Base App' });
 };
 
 // GET /about
-exports.about = (req, res) => {
+function about(req, res) {
   res.render('pages/about', { title: 'About' });
 };
+
+module.exports = router;
 ```
 
 ---
